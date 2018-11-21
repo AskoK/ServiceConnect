@@ -2,13 +2,18 @@ package com.example.admin.serviceconnect;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.content.ServiceConnection;
+import com.example.admin.serviceconnect.MyService.LocalBinder;
+
 import android.widget.Toast;
 import android.app.Service;
 import java.lang.reflect.Type;
@@ -19,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
 
     Button bconnect, bdate, bclock;
     TextView txt;
+
+    MyService myService;
+    boolean mBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,15 +42,15 @@ public class MainActivity extends AppCompatActivity {
         bconnect.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                Intent serviceToggle = new Intent(MainActivity.this, MyService.class);
                 //If Service is running, stop it
                 if(isMyServiceRunning(MyService.class)) {
-                    stopService(serviceToggle);
+                    onStop();
                     txt.setText("Disconected");
                     bconnect.setText("Connect");
                 //If service is not running, Start it
                 } else {
-                    startService(serviceToggle);
+                    Intent serviceToggle = new Intent(MainActivity.this, MyService.class);
+                    bindService(serviceToggle, myConnection, Context.BIND_AUTO_CREATE);
                     txt.setText("Connected");
                     bconnect.setText("Disconnect");
                 }
@@ -54,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(isMyServiceRunning(MyService.class)) {
-                    txt.setText(getDate());
+                    txt.setText(myService.getDate());
                 }
             }
         });
@@ -64,23 +72,33 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(isMyServiceRunning(MyService.class)) {
-                    txt.setText(getTime());
+                    txt.setText(myService.getTime());
                 }
             }
         });
     }
 
-    //Method to display Date
-    public String getDate() {
-        SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        return mDateFormat.format(new Date());
+    //Service stop
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(myConnection);
+        mBound = false;
     }
 
-    //Method to display Time
-    public String getTime() {
-        SimpleDateFormat mDateFormat = new SimpleDateFormat("HH:mm:ss");
-        return mDateFormat.format(new Date());
-    }
+    private ServiceConnection myConnection = new ServiceConnection()
+    {
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            LocalBinder binder = (LocalBinder) service;
+            myService = binder.getService();
+            mBound = true;
+        }
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+
+    };
 
     //Check if Service is running or not
     private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -92,5 +110,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
 }
