@@ -2,6 +2,7 @@ package com.example.admin.serviceconnect;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,14 +14,34 @@ import java.util.Date;
 
 public class MyService extends Service {
 
+    private final IBinder mBinder = new LocalBinder();
+
 
     public MyService() {
     }
 
+    public class LocalBinder extends Binder {
+        MyService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return MyService.this;
+        }
+    }
+
+    //Method to display Date
+    public String getDate() {
+        SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        return mDateFormat.format(new Date());
+    }
+
+    //Method to display Time
+    public String getTime() {
+        SimpleDateFormat mDateFormat = new SimpleDateFormat("HH:mm:ss");
+        return mDateFormat.format(new Date());
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return mBinder;
     }
 
     @Override
@@ -38,6 +59,5 @@ public class MyService extends Service {
     public void onDestroy() {
         super.onDestroy();
     }
-
 
 }
